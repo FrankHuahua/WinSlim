@@ -1,0 +1,55 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: 校验目录 JSON
+        shell: pwsh
+        run: |
+          Get-ChildItem src/WinSlim/wwwroot/catalog/*.json | ForEach-Object {
+            Get-Content $_ -Raw -Encoding utf8 | ConvertFrom-Json | Out-Null
+            "ok $($_.Name)"
+          }
+
+      - name: 只读自检（目录校验 + 每项检测）
+        shell: pwsh
+        run: |
+          dotnet build src/WinSlim/WinSlim.csproj -c Debug -nologo
+          $dll = Get-ChildItem src/WinSlim/bin/Debug -Recurse -Filter WinSlim.dll | Select-Object -First 1
+          dotnet $dll.FullName --selftest selftest.json
+          $code = $LASTEXITCODE
+          Get-Content selftest.json -Raw | ConvertFrom-Json | Select-Object -ExpandProperty errors
+          exit $code
+
+      - name: 发布单文件程序
+        run: dotnet publish src/WinSlim/WinSlim.csproj -c Release -o dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WinSlim
+          path: dist/WinSlim.exe
+
+      - name: 打标签时创建 Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash dist/WinSlim.exe -Algorithm SHA256).Hash
+          gh release create $env:GITHUB_REF_NAME dist/WinSlim.exe --title "WinSlim $env:GITHUB_REF_NAME" --notes "SHA-256: $hash"

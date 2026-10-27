@@ -1,0 +1,8 @@
+bin/
+obj/
+dist/
+*.user
+.vs/
+.vscode/
+.taste-skill/
+.claude/settings.local.json

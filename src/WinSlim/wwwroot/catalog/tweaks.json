@@ -1,0 +1,557 @@
+{
+  "categories": [
+    { "id": "privacy", "title": "隐私与遥测", "summary": "减少向微软发送的数据，关闭个性化广告与推荐。" },
+    { "id": "ads", "title": "广告与推广", "summary": "关闭开始菜单、锁屏、设置和资源管理器里的推广内容，阻止系统自动安装推广应用。" },
+    { "id": "ai", "title": "Copilot 与 AI", "summary": "关闭 Copilot、Recall 等 AI 功能的入口和数据采集。" },
+    { "id": "taskbar", "title": "任务栏与开始菜单", "summary": "去掉不常用的任务栏按钮和小组件，整理开始菜单。" },
+    { "id": "explorer", "title": "文件资源管理器", "summary": "更直观的文件显示方式与经典右键菜单。" },
+    { "id": "performance", "title": "性能与后台", "summary": "减少后台占用和磁盘写入，释放存储空间。" },
+    { "id": "update", "title": "Windows 更新", "summary": "让更新不打扰你，但仍然保持安全补丁。" },
+    { "id": "security", "title": "安全取舍", "summary": "以安全性换取性能或兼容性。每一项都有明确的代价，请逐条阅读后再决定。" }
+  ],
+  "tweaks": [
+    {
+      "id": "telemetry-min",
+      "category": "privacy",
+      "title": "把诊断数据降到最低",
+      "desc": "Windows 会持续把诊断数据（设备信息、崩溃、使用情况）上传给微软。这项把组策略“允许诊断数据”设为最低级别。",
+      "effect": "上传的数据量减少，后台的 DiagTrack 活动随之减少。专业版及以下会降到“必需的诊断数据”，企业版和教育版会完全关闭。",
+      "risk": "Windows 预览体验计划需要完整诊断数据，开启后无法再获取预览版。“设置”顶部会显示“某些设置由组织管理”。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection", "name": "AllowTelemetry", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "advertising-id",
+      "category": "privacy",
+      "title": "关闭广告 ID",
+      "desc": "广告 ID 是每个用户唯一的标识符，应用可以用它跨应用追踪你，从而投放个性化广告。",
+      "effect": "应用无法再通过广告 ID 关联你的行为，广告不再个性化。",
+      "risk": "没有功能损失。广告数量不会减少，只是不再“精准”。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo", "name": "Enabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\AdvertisingInfo", "name": "DisabledByGroupPolicy", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "tailored-experiences",
+      "category": "privacy",
+      "title": "关闭“量身定制的体验”",
+      "desc": "允许微软根据你的诊断数据推送个性化提示、广告和推荐。",
+      "effect": "系统里的推荐和提示不再基于你的使用数据生成。",
+      "risk": "没有功能损失。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Privacy", "name": "TailoredExperiencesWithDiagnosticDataEnabled", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "activity-history",
+      "category": "privacy",
+      "title": "关闭活动历史记录",
+      "desc": "Windows 会记录你打开过的应用、文件和网页，并可能同步到微软账户。",
+      "effect": "不再收集和上传活动历史记录。",
+      "risk": "Windows 10 的“时间线”会变空。跨设备“从上次中断的地方继续”不可用。",
+      "level": "safe", "os": "all", "restart": "logoff", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System", "name": "EnableActivityFeed", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System", "name": "PublishUserActivities", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\System", "name": "UploadUserActivities", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "web-search",
+      "category": "privacy",
+      "title": "开始菜单搜索不再联网",
+      "desc": "在开始菜单或任务栏搜索框里输入的每个字，都会发送给必应，用来显示网页结果和“今日热搜”。",
+      "effect": "搜索只查找本机的应用、文件和设置，速度更快，显示更干净。输入的内容不再上传。",
+      "risk": "搜索框里不再出现网页结果。需要搜网页时请打开浏览器。",
+      "level": "safe", "os": "all", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Policies\\Microsoft\\Windows\\Explorer", "name": "DisableSearchBoxSuggestions", "kind": "dword", "value": 1 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Search", "name": "BingSearchEnabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search", "name": "EnableDynamicContentInWSB", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "feedback-prompts",
+      "category": "privacy",
+      "title": "不再弹出反馈请求",
+      "desc": "Windows 会时不时弹出窗口，询问你对某个功能的满意度。",
+      "effect": "不再弹出反馈调查。",
+      "risk": "没有功能损失。需要时仍可以主动打开“反馈中心”。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Siuf\\Rules", "name": "NumberOfSIUFInPeriod", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection", "name": "DoNotShowFeedbackNotifications", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "app-launch-tracking",
+      "category": "privacy",
+      "title": "停止记录应用启动次数",
+      "desc": "Windows 会统计你启动每个应用的次数，用来生成开始菜单的“最常用”列表和搜索排序。",
+      "effect": "不再统计应用启动次数。",
+      "risk": "开始菜单的“最常用”列表会消失。搜索结果不再按使用频率排序。",
+      "level": "safe", "os": "all", "restart": "explorer", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "Start_TrackProgs", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "silent-app-installs",
+      "category": "ads",
+      "title": "阻止自动安装推广应用",
+      "desc": "新系统或大版本更新之后，Windows 会自动往开始菜单里装上 Candy Crush、TikTok、Spotify 等推广应用，或者放上它们的占位图标。",
+      "effect": "系统不再偷偷安装推广应用。卸载过的推广应用不会再回来。",
+      "risk": "没有功能损失。已经装上的推广应用不会被删除，请到“预装应用”页面卸载。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SilentInstalledAppsEnabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "OemPreInstalledAppsEnabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "PreInstalledAppsEnabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent", "name": "DisableWindowsConsumerFeatures", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "start-suggestions",
+      "category": "ads",
+      "title": "关闭开始菜单和设置里的推荐",
+      "desc": "开始菜单里的“推荐应用”，以及“设置”页面里的“建议的内容”，其实都是广告位。",
+      "effect": "开始菜单和设置里不再出现推广应用和功能推荐。",
+      "risk": "没有功能损失。",
+      "level": "safe", "os": "all", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SystemPaneSuggestionsEnabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-338388Enabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-338393Enabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-353694Enabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-353696Enabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "Start_IrisRecommendations", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "tips-notifications",
+      "category": "ads",
+      "title": "关闭“提示和建议”通知",
+      "desc": "Windows 会用通知推送“使用技巧”，或者劝你“完成设备设置”（开通 OneDrive、Microsoft 365 等）。",
+      "effect": "不再收到技巧类通知，也不再出现“让我们完成设备设置”的全屏提示。",
+      "risk": "没有功能损失。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-338389Enabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SoftLandingEnabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\UserProfileEngagement", "name": "ScoobeSystemSettingEnabled", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "lockscreen-tips",
+      "category": "ads",
+      "title": "锁屏不再显示趣闻和广告",
+      "desc": "使用“Windows 聚焦”或图片锁屏时，锁屏上会叠加“趣味知识”和推广链接。",
+      "effect": "锁屏只显示壁纸、时间和通知。",
+      "risk": "没有功能损失。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "RotatingLockScreenOverlayEnabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "name": "SubscribedContent-338387Enabled", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "explorer-sync-ads",
+      "category": "ads",
+      "title": "资源管理器不再推销 OneDrive",
+      "desc": "文件资源管理器顶部会出现横幅，推荐你开通 OneDrive 或升级 Microsoft 365 存储空间。",
+      "effect": "资源管理器里不再出现同步服务的推广横幅。",
+      "risk": "没有功能损失。OneDrive 本身不受影响。",
+      "level": "safe", "os": "all", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "ShowSyncProviderNotifications", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "edge-background",
+      "category": "ads",
+      "title": "禁止 Edge 开机预加载和后台运行",
+      "desc": "即使你从不打开 Edge，它也会在开机时预先加载（启动加速），关掉窗口后还继续在后台运行。",
+      "effect": "开机少几个常驻进程，占用约 100 至 300 MB 内存。",
+      "risk": "Edge 首次打开会慢一两秒。关闭窗口后，Edge 扩展的后台通知会停止。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge", "name": "StartupBoostEnabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Edge", "name": "BackgroundModeEnabled", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "copilot-off",
+      "category": "ai",
+      "title": "关闭 Windows Copilot",
+      "desc": "Windows 11 把 Copilot 集成进任务栏和快捷键（Win+C）。这项会关闭它的系统入口。",
+      "effect": "任务栏里的 Copilot 按钮消失，系统入口关闭。",
+      "risk": "Windows 11 24H2 之后，Copilot 改成了独立应用，这条策略可能不再生效，需要到“预装应用”页面卸载 Copilot 应用。",
+      "level": "safe", "os": "11", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Policies\\Microsoft\\Windows\\WindowsCopilot", "name": "TurnOffWindowsCopilot", "kind": "dword", "value": 1 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "ShowCopilotButton", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "recall-off",
+      "category": "ai",
+      "title": "关闭 Recall 屏幕快照",
+      "desc": "Recall（回顾）会每隔几秒给屏幕截图，并在本地建立可搜索的索引，只出现在 Copilot+ PC 上。",
+      "effect": "停止截图和分析，不再记录你在屏幕上看到的内容。",
+      "risk": "无法再通过 Recall 回溯以前看过的内容。在非 Copilot+ PC 上这项没有作用，也没有影响。",
+      "level": "safe", "os": "11", "restart": "logoff", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Policies\\Microsoft\\Windows\\WindowsAI", "name": "DisableAIDataAnalysis", "kind": "dword", "value": 1 },
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsAI", "name": "DisableAIDataAnalysis", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "cortana-off",
+      "category": "ai",
+      "title": "关闭 Cortana",
+      "desc": "Cortana（小娜）是 Windows 10 的语音助手，中文版的功能早已大幅缩减。",
+      "effect": "Cortana 不再运行，任务栏上的 Cortana 按钮消失。",
+      "risk": "无法再使用语音助手。本地搜索不受影响。",
+      "level": "safe", "os": "10", "restart": "logoff", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search", "name": "AllowCortana", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "ShowCortanaButton", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "widgets-off",
+      "category": "taskbar",
+      "title": "关闭小组件",
+      "desc": "Windows 11 任务栏左侧会显示天气和资讯面板，后台常驻 WebView 进程，内容大多是新闻推送。",
+      "effect": "小组件按钮和面板消失。后台少一组 Widgets 和 WebView2 进程，节省约 100 至 200 MB 内存。",
+      "risk": "无法再通过小组件查看天气、股票、日历。",
+      "level": "safe", "os": "11", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Dsh", "name": "AllowNewsAndInterests", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "news-interests-off",
+      "category": "taskbar",
+      "title": "关闭资讯和兴趣",
+      "desc": "Windows 10 任务栏右侧会显示天气，鼠标悬停时弹出新闻面板。",
+      "effect": "任务栏上的天气和资讯消失，后台少一个常驻的 Edge WebView 进程。",
+      "risk": "任务栏上不再显示天气。",
+      "level": "safe", "os": "10", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Feeds", "name": "EnableFeeds", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "chat-icon-off",
+      "category": "taskbar",
+      "title": "去掉任务栏“聊天”按钮",
+      "desc": "Windows 11 早期版本在任务栏放了 Teams 个人版的“聊天”入口。",
+      "effect": "“聊天”按钮消失。",
+      "risk": "没有功能损失。Teams 本身不受影响。新版 Windows 11 已经去掉了这个按钮，这项不起作用。",
+      "level": "safe", "os": "11", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Chat", "name": "ChatIcon", "kind": "dword", "value": 3 }
+      ]
+    },
+    {
+      "id": "taskview-button-off",
+      "category": "taskbar",
+      "title": "去掉“任务视图”按钮",
+      "desc": "任务栏上用来切换窗口和虚拟桌面的按钮。",
+      "effect": "任务栏更简洁。",
+      "risk": "功能还在：Win+Tab 仍然可以打开任务视图。",
+      "level": "safe", "os": "all", "restart": "explorer", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "ShowTaskViewButton", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "search-box-icon",
+      "category": "taskbar",
+      "title": "任务栏搜索框缩成图标",
+      "desc": "默认的大搜索框会占用不少任务栏空间。",
+      "effect": "搜索框缩成一个放大镜图标，留给已打开窗口的空间更多。",
+      "risk": "功能还在：点击图标或按 Win 键直接打字都能搜索。",
+      "level": "safe", "os": "all", "restart": "explorer", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Search", "name": "SearchboxTaskbarMode", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "taskbar-left",
+      "category": "taskbar",
+      "title": "任务栏图标靠左",
+      "desc": "Windows 11 默认把任务栏图标居中，这项改回 Windows 10 的靠左排列。",
+      "effect": "开始按钮回到左下角，鼠标移动距离更短。",
+      "risk": "纯外观调整，没有功能影响。",
+      "level": "safe", "os": "11", "restart": "explorer", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "TaskbarAl", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "meet-now-off",
+      "category": "taskbar",
+      "title": "去掉“立即开会”图标",
+      "desc": "Windows 10 通知区域里的 Skype“立即开会”摄像头图标。",
+      "effect": "通知区域少一个图标。",
+      "risk": "没有功能损失。",
+      "level": "safe", "os": "10", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer", "name": "HideSCAMeetNow", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "people-bar-off",
+      "category": "taskbar",
+      "title": "去掉“人脉”按钮",
+      "desc": "Windows 10 任务栏上的“人脉”联系人入口，基本没人使用。",
+      "effect": "任务栏少一个按钮。",
+      "risk": "没有功能损失。",
+      "level": "safe", "os": "10", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Policies\\Microsoft\\Windows\\Explorer", "name": "HidePeopleBar", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "clock-seconds",
+      "category": "taskbar",
+      "title": "任务栏时钟显示秒",
+      "desc": "在任务栏右下角的时间里显示秒数。",
+      "effect": "可以看到精确到秒的时间。",
+      "risk": "每秒刷新一次任务栏，耗电会略微增加。笔记本用户可以不开。",
+      "level": "safe", "os": "all", "restart": "explorer", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "ShowSecondsInSystemClock", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "classic-context-menu",
+      "category": "explorer",
+      "title": "恢复完整的经典右键菜单",
+      "desc": "Windows 11 的新右键菜单把大部分选项折叠到了“显示更多选项”里，压缩软件、编辑器等第三方菜单项要点两次才能看到。",
+      "effect": "右键直接显示完整的经典菜单，所有选项一次可见。",
+      "risk": "失去新菜单的大图标和简洁外观。少数只适配新菜单的应用（例如部分商店应用）的菜单项不会出现在经典菜单里。",
+      "level": "safe", "os": "11", "restart": "explorer", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32", "name": "", "kind": "string", "value": "", "revertDeleteKey": "HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}" }
+      ]
+    },
+    {
+      "id": "show-extensions",
+      "category": "explorer",
+      "title": "显示文件扩展名",
+      "desc": "默认隐藏 .exe、.docx 等扩展名。“发票.pdf.exe”这类伪装文件就是利用这一点骗人打开的。",
+      "effect": "所有文件显示完整名称，一眼就能认出伪装成文档的程序。",
+      "risk": "重命名文件时要注意不要误删扩展名。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "HideFileExt", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "show-hidden",
+      "category": "explorer",
+      "title": "显示隐藏文件",
+      "desc": "显示带“隐藏”属性的文件和文件夹，例如 AppData。",
+      "effect": "可以直接看到并进入隐藏文件夹。",
+      "risk": "隐藏文件会以半透明样式出现，文件夹显得杂乱一些。受保护的系统文件仍然保持隐藏。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "Hidden", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "open-this-pc",
+      "category": "explorer",
+      "title": "资源管理器默认打开“此电脑”",
+      "desc": "资源管理器默认打开“主文件夹”或“快速访问”，里面混着最近文件和云端推荐。",
+      "effect": "按 Win+E 直接显示磁盘列表。",
+      "risk": "纯偏好调整。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced", "name": "LaunchTo", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "quick-access-history",
+      "category": "explorer",
+      "title": "快速访问不显示最近使用的文件",
+      "desc": "快速访问和主页会列出你最近打开的文件和常用文件夹。",
+      "effect": "别人用你电脑时，看不到你最近打开过什么。",
+      "risk": "无法再从快速访问快速打开最近的文件。",
+      "level": "safe", "os": "all", "restart": "explorer", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer", "name": "ShowRecent", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer", "name": "ShowFrequent", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer", "name": "ShowCloudFilesInQuickAccess", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "background-apps",
+      "category": "performance",
+      "title": "禁止商店应用在后台运行",
+      "desc": "商店应用（UWP）即使没打开，也能在后台接收数据、刷新磁贴和推送通知。",
+      "effect": "后台进程减少，笔记本续航有所改善。",
+      "risk": "邮件、日历、手机连接等商店应用在关闭窗口后不再推送通知。依赖后台同步的应用需要手动打开才会更新。桌面版程序（QQ、微信等）不受影响。",
+      "level": "moderate", "os": "all", "restart": "logoff", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\AppPrivacy", "name": "LetAppsRunInBackground", "kind": "dword", "value": 2 }
+      ]
+    },
+    {
+      "id": "game-dvr-off",
+      "category": "performance",
+      "title": "关闭游戏后台录制",
+      "desc": "Xbox Game Bar 的“后台录制”会在游戏时持续把画面写入缓存，以便事后保存精彩片段。",
+      "effect": "游戏时不再占用编码器和磁盘，低端机的帧率会更稳定。",
+      "risk": "无法再用 Win+Alt+G 保存“刚才 30 秒”的录像。手动录屏（Win+Alt+R）不受影响。",
+      "level": "safe", "os": "all", "restart": "logoff", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKCU\\System\\GameConfigStore", "name": "GameDVR_Enabled", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\GameDVR", "name": "AllowGameDVR", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "delivery-optimization",
+      "category": "performance",
+      "title": "关闭更新的 P2P 分发",
+      "desc": "“传递优化”会把你下载的更新上传给局域网甚至互联网上的其他电脑，占用你的上行带宽。",
+      "effect": "更新只从微软服务器下载，不再占用上行带宽。",
+      "risk": "同一个局域网里有很多台电脑时，每台都要单独下载更新，总流量会增加。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization", "name": "DODownloadMode", "kind": "dword", "value": 0 }
+      ]
+    },
+    {
+      "id": "sysmain-off",
+      "category": "performance",
+      "title": "停用 SysMain（Superfetch）",
+      "desc": "SysMain 会分析你的使用习惯，把常用程序预先读入内存。机械硬盘上效果明显，但它本身会频繁读写磁盘。",
+      "effect": "开机后的硬盘狂转和 CPU 占用会减轻，在小内存的机械硬盘电脑上尤其明显。",
+      "risk": "常用程序第一次启动会慢一点。使用固态硬盘的电脑几乎感觉不到差别，此时既没有收益也没有损失。",
+      "level": "moderate", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "service", "name": "SysMain", "startType": "disabled", "revertStartType": "auto" }
+      ]
+    },
+    {
+      "id": "search-index-off",
+      "category": "performance",
+      "title": "停用 Windows 搜索索引",
+      "desc": "Windows Search 服务会持续扫描文件，建立搜索索引。文件很多时，它会长时间占用磁盘和 CPU。",
+      "effect": "后台的磁盘扫描停止，释放索引数据库占用的空间（可能有几 GB）。",
+      "risk": "开始菜单搜索文件和 Outlook 搜索邮件都会明显变慢，甚至搜不到。资源管理器的搜索要现场遍历文件。建议改用 Everything 这类工具。",
+      "level": "moderate", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "service", "name": "WSearch", "startType": "disabled", "revertStartType": "delayed-auto" }
+      ]
+    },
+    {
+      "id": "hibernation-off",
+      "category": "performance",
+      "title": "关闭休眠，删除 hiberfil.sys",
+      "desc": "休眠会把内存内容写入系统盘上的 hiberfil.sys，这个文件通常有内存大小的 40% 到 75%。",
+      "effect": "立即释放系统盘空间：16 GB 内存约 6 至 12 GB。同时会关闭“快速启动”。",
+      "risk": "无法再使用“休眠”，只能“睡眠”或关机。笔记本合盖后如果电量耗尽，未保存的内容会丢失。冷开机会稍慢几秒。",
+      "level": "moderate", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "cmd", "apply": "powercfg /h off", "revert": "powercfg /h on" }
+      ],
+      "detect": { "type": "reg", "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power", "name": "HibernateEnabled", "value": 0 }
+    },
+    {
+      "id": "fast-startup-off",
+      "category": "performance",
+      "title": "关闭快速启动",
+      "desc": "快速启动在关机时把系统内核休眠保存下来，下次开机直接恢复。所以“关机”其实不是真正的关机。",
+      "effect": "每次开机都是完整启动。驱动更新、双系统共享分区、部分 USB 设备识别失败等问题会消失。",
+      "risk": "开机会慢几秒（固态硬盘上几乎感觉不到）。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Power", "name": "HiberbootEnabled", "kind": "dword", "value": 0, "revertValue": 1 }
+      ]
+    },
+    {
+      "id": "reserved-storage-off",
+      "category": "performance",
+      "title": "收回系统保留存储",
+      "desc": "Windows 会预留约 7 GB 空间专门留给更新使用，你自己不能用。",
+      "effect": "收回约 7 GB 系统盘空间。",
+      "risk": "系统盘接近满时，大版本更新可能因为空间不足而失败。系统盘小于 64 GB 的电脑请不要开启。",
+      "level": "moderate", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "cmd", "apply": "DISM.exe /English /Online /Set-ReservedStorageState /State:Disabled", "revert": "DISM.exe /English /Online /Set-ReservedStorageState /State:Enabled" }
+      ],
+      "detect": { "type": "cmd", "run": "DISM.exe /English /Online /Get-ReservedStorageState", "contains": "disabled" }
+    },
+    {
+      "id": "no-auto-reboot",
+      "category": "update",
+      "title": "有人登录时不自动重启",
+      "desc": "更新装好后，Windows 可能会在你没保存工作的情况下，自动重启电脑。",
+      "effect": "只要有用户登录，就不会被强制重启，由你自己选择重启时间。",
+      "risk": "更新会一直“等待重启”，直到你手动重启。期间安全补丁不会生效。",
+      "level": "safe", "os": "all", "restart": "none", "recommended": true,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU", "name": "NoAutoRebootWithLoggedOnUsers", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "no-driver-updates",
+      "category": "update",
+      "title": "不通过 Windows 更新安装驱动",
+      "desc": "Windows 更新会自动推送显卡、声卡等驱动，有时会覆盖掉你从官网装好的新版驱动。",
+      "effect": "驱动版本由你自己掌控，不会被悄悄替换。",
+      "risk": "新设备插上后，可能需要你自己去官网下载驱动。系统也不再自动修复有问题的驱动。",
+      "level": "moderate", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate", "name": "ExcludeWUDriversInQualityUpdate", "kind": "dword", "value": 1 }
+      ]
+    },
+    {
+      "id": "long-pause",
+      "category": "update",
+      "title": "允许暂停更新更长时间",
+      "desc": "“设置”里的暂停更新最多只能选 5 周。这项把上限放宽到 20 年，暂停多久仍然由你在“设置”里选择。",
+      "effect": "可以在“设置 > Windows 更新”里选择更长的暂停时间。本工具不会替你暂停。",
+      "risk": "暂停期间收不到任何安全补丁。长期暂停会让电脑暴露在已公开的漏洞之下。请只在有明确理由时暂停。",
+      "level": "moderate", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings", "name": "FlightSettingsMaxPauseDays", "kind": "dword", "value": 7300 }
+      ]
+    },
+    {
+      "id": "uac-no-dim",
+      "category": "security",
+      "title": "UAC 提示不再黑屏",
+      "desc": "安装软件时弹出的“是否允许此应用更改设备”确认框会让整个屏幕变暗（安全桌面）。",
+      "effect": "确认框仍然会弹出，但屏幕不再变暗和闪烁，切换更快。",
+      "risk": "安全桌面能防止恶意程序模拟点击“是”。关闭后，已经在运行的恶意程序理论上可以自动通过确认。",
+      "level": "moderate", "os": "all", "restart": "none", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System", "name": "PromptOnSecureDesktop", "kind": "dword", "value": 0, "revertValue": 1 }
+      ]
+    },
+    {
+      "id": "vbs-off",
+      "category": "security",
+      "title": "关闭基于虚拟化的安全（内存完整性）",
+      "desc": "VBS 和 HVCI（内存完整性）借助虚拟化隔离系统内核，阻止恶意驱动加载。代价是 CPU 开销，游戏帧率可能下降 5% 至 15%。",
+      "effect": "游戏和虚拟机（VMware、模拟器）的性能会提升，一些老旧驱动可以正常加载。",
+      "risk": "内核级的防护会被削弱，恶意驱动和部分 rootkit 更容易得逞。企业和公司设备请不要关闭。需要重启才能生效。",
+      "level": "high", "os": "all", "restart": "reboot", "recommended": false,
+      "actions": [
+        { "type": "reg", "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard", "name": "EnableVirtualizationBasedSecurity", "kind": "dword", "value": 0 },
+        { "type": "reg", "path": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard\\Scenarios\\HypervisorEnforcedCodeIntegrity", "name": "Enabled", "kind": "dword", "value": 0 }
+      ]
+    }
+  ]
+}
