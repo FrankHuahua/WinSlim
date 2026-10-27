@@ -1,6 +1,6 @@
 'use strict';
 
-const REPO_URL = 'https://github.com/OWNER/win-slim';
+const REPO_URL = 'https://github.com/FrankHuahua/win-slim';
 
 /* ---------- 与后台通信 ---------- */
 const host = (window.chrome && window.chrome.webview) || window.__winslimHost;
