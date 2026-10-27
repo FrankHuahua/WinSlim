@@ -12,7 +12,11 @@ WinSlim 是在“Windows11轻松设置 v1.07”的基础上重新编写的（对
 | 优化项 | 40 多项优化，分为隐私与遥测、广告与推广、Copilot 与 AI、任务栏与开始菜单、资源管理器、性能与后台、Windows 更新、安全取舍 8 类 |
 | 预装应用 | 卸载资讯、纸牌、Clipchamp 等预装应用，可以同时阻止新用户自动安装；卸错了可以从微软商店重新安装 |
 | 磁盘清理 | 临时文件、更新缓存、传递优化缓存、错误报告、缩略图、回收站、WinSxS 组件存储 |
+| 系统防护 | 防火墙开关与规则、Windows Defender 实时保护开关。全部通过微软官方命令（Set-NetFirewallProfile、Set-MpPreference 等）实现，带醒目高风险提示，可一键还原 |
 | 改动记录 | 查看 WinSlim 做过的所有改动，逐项或全部还原；创建系统还原点；查看日志 |
+| 关于与声明 | 免责声明、非商业使用许可、作者与项目链接 |
+
+> 关于“系统防护”：关闭防火墙或杀毒会直接降低系统安全性，仅建议在清楚风险时使用。WinSlim **不会**绕过 Windows 的“篡改防护”，关闭 Defender 需要你在 Windows 安全中心亲自确认——这既更安全，也不把工具做成对抗杀软的性质。
 
 ### 每一项都有三段说明
 
@@ -80,6 +84,7 @@ src/WinSlim/
     SystemInfo.cs         系统信息、创建还原点、重启资源管理器
   wwwroot/
     catalog/tweaks.json   全部优化项：说明、效果、后果、风险等级和具体改动
+    catalog/protection.json   系统防护项（防火墙 / Defender）
     catalog/apps.json     预装应用目录
     catalog/maintenance.json  清理项
     index.html, app.css, app.js  界面
@@ -113,8 +118,15 @@ tools/dev-server.mjs      界面预览服务器
 
 - `reg`：可以加 `revertValue`（没有备份时还原成这个值）或 `revertDeleteKey`（还原时删除整个键）
 - `service`：需要 `startType` 和 `revertStartType`
-- `cmd`：需要 `apply` 和 `revert`，并且要配一条 `detect` 规则，用来判断当前状态
+- `cmd`：需要 `apply` 和 `revert`，并且要配一条 `detect` 规则，用来判断当前状态。
+  加 `"shell": "powershell"` 可用 PowerShell 执行（系统防护项就是这样调用官方 cmdlet 的）
+
+## 作者
+
+- FrankHuahua
+- 邮箱：wxl995232151@gmail.com
+- GitHub：https://github.com/FrankHuahua
 
 ## 许可
 
-MIT
+[非商业使用许可](LICENSE)：源代码可查看、可个人免费使用和修改、可非商业分发，**禁止任何商业用途**（需商用请联系作者）。项目在功能完善后计划正式开源。

@@ -19,7 +19,12 @@ public sealed class Bridge
     public Bridge(Action<string> post)
     {
         _post = post;
-        _engine = new TweakEngine(Load<TweakCatalog>("catalog/tweaks.json"));
+        var catalog = Load<TweakCatalog>("catalog/tweaks.json");
+        // 系统防护（防火墙 / Defender）单独一份目录，合并进同一套检测、应用、还原流程。
+        var protection = Load<TweakCatalog>("catalog/protection.json");
+        catalog.Categories.AddRange(protection.Categories);
+        catalog.Tweaks.AddRange(protection.Tweaks);
+        _engine = new TweakEngine(catalog);
         _apps = Load<AppCatalog>("catalog/apps.json");
         _maintenance = Load<MaintenanceCatalog>("catalog/maintenance.json");
     }
@@ -77,6 +82,8 @@ public sealed class Bridge
         "runCleanup" => RunCleanup(Ids(p)),
         "restorePoint" => RestorePoint(),
         "openUrl" => Run(() => { Shell.OpenUrl(p.GetProperty("url").GetString()!); return Task.CompletedTask; }),
+        "openDefenderSettings" => Run(() => { Shell.OpenUrl("windowsdefender://Threatsettings"); return Task.CompletedTask; }),
+        "openFirewallConsole" => Run(() => { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("wf.msc") { UseShellExecute = true }); return Task.CompletedTask; }),
         "openLogFolder" => Run(() => { Directory.CreateDirectory(Log.Dir); System.Diagnostics.Process.Start("explorer.exe", Log.Dir); return Task.CompletedTask; }),
         "openSystemRestore" => Run(() => { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("rstrui.exe") { UseShellExecute = true }); return Task.CompletedTask; }),
         _ => throw new NotSupportedException("未知的方法：" + method),
@@ -108,7 +115,7 @@ public sealed class Bridge
     {
         "reg" => $"{a.Path} › {(string.IsNullOrEmpty(a.Name) ? "(默认)" : a.Name)} = {(a.Value?.ValueKind == JsonValueKind.String ? "\"" + a.Value?.GetString() + "\"" : a.Value?.ToString())}",
         "service" => $"服务 {a.Name} 启动类型 → {StartTypeName(a.StartType)}",
-        "cmd" => $"运行 {a.Apply}",
+        "cmd" => $"{(a.Shell == "powershell" ? "PowerShell" : "命令")}：{a.Apply}",
         _ => a.Type,
     };
 

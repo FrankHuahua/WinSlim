@@ -1,6 +1,7 @@
 'use strict';
 
 const REPO_URL = 'https://github.com/FrankHuahua/win-slim';
+const AUTHOR = { name: 'FrankHuahua', github: 'https://github.com/FrankHuahua', email: 'wxl995232151@gmail.com' };
 
 /* ---------- 与后台通信 ---------- */
 const host = (window.chrome && window.chrome.webview) || window.__winslimHost;
@@ -67,10 +68,14 @@ function duration(sec) {
   return d > 0 ? `${d} 天 ${h} 小时` : h > 0 ? `${h} 小时 ${m} 分` : `${m} 分钟`;
 }
 const tweaks = () => S.catalog?.tweaks ?? [];
+// 系统防护（防火墙 / Defender）单独成页，不混进主优化列表、账本和搜索。
+const PROTECT = 'protection';
+const mainTweaks = () => tweaks().filter((t) => t.category !== PROTECT);
+const protectionTweaks = () => tweaks().filter((t) => t.category === PROTECT);
 const stateOf = (t) => S.status.get(t.id)?.state ?? null;
 const isApplied = (t) => stateOf(t) === 'applied';
 const category = (id) => S.catalog.categories.find((c) => c.id === id);
-const categoriesInUse = () => S.catalog.categories.filter((c) => tweaks().some((t) => t.category === c.id));
+const categoriesInUse = () => S.catalog.categories.filter((c) => c.id !== PROTECT && mainTweaks().some((t) => t.category === c.id));
 const strongestRestart = (list) => list.reduce((a, t) => (RESTART_ORDER.indexOf(t.restart) > RESTART_ORDER.indexOf(a) ? t.restart : a), 'none');
 
 /* ---------- 路由 ---------- */
@@ -90,7 +95,8 @@ function render() {
   });
   const staged = $('#nav-staged');
   staged.hidden = S.staged.size === 0;
-  staged.textContent = `待处理 ${S.staged.size}`;
+  staged.className = 'count hot num';
+  staged.textContent = S.staged.size;
 
   const top = view.scrollTop;
   const html = {
@@ -98,7 +104,9 @@ function render() {
     tweaks: () => renderTweaks(r.arg),
     apps: renderApps,
     cleanup: renderCleanup,
+    protection: renderProtection,
     history: renderHistory,
+    about: renderAbout,
   }[r.name]?.() ?? renderOverview();
   view.innerHTML = noticesHtml() + html;
   view.scrollTop = top;
@@ -107,7 +115,7 @@ function render() {
 
 function noticesHtml() {
   return S.notices.map((n, i) => `
-    <div class="notice" role="status">
+    <div class="notice${n.kind ? ' ' + n.kind : ''}" role="status">
       <span>${esc(n.text)}</span>
       ${n.action ? `<button class="link" data-action="notice-act" data-i="${i}">${esc(n.action.label)}</button>` : ''}
       <button class="link" data-action="notice-close" data-i="${i}">知道了</button>
@@ -115,7 +123,7 @@ function noticesHtml() {
 }
 
 function renderOverview() {
-  const all = tweaks();
+  const all = mainTweaks();
   const rec = all.filter((t) => t.recommended);
   const recPending = rec.filter((t) => !isApplied(t));
   const applied = all.filter(isApplied).length;
@@ -171,7 +179,7 @@ function renderOverview() {
       <section class="card" aria-labelledby="ledger-h">
         <div class="card-head"><h2 id="ledger-h">减负账本</h2><span class="meta num">${loading ? '' : `共 ${all.length} 项，已优化 ${applied} 项`}</span></div>
         <div class="answer">
-          <span class="big num">${loading ? '<span class="skeleton" style="height:28px;width:40px"></span>' : recPending.length}</span>
+          <span class="big num hi">${loading ? '<span class="skeleton" style="height:28px;width:40px"></span>' : recPending.length}</span>
           <p>${loading ? '' : recPending.length ? '项推荐优化还没做。推荐项只包含没有明显副作用的改动。' : '项推荐优化待处理。可以按需看看“需留意”的项。'}</p>
         </div>
         <div class="card-body"><ul class="ledger">${ledgerRows}</ul></div>
@@ -190,9 +198,9 @@ function renderOverview() {
             </ul>
             <div style="margin-top:10px">
               <div class="meter-cap"><span>内存已用</span><span class="num">${bytes(sys.memoryUsed, true)} / ${bytes(sys.memoryTotal, true)}</span></div>
-              <div class="meter"><b style="width:${memPct.toFixed(1)}%"></b></div>
+              <div class="meter${memPct > 85 ? ' warn' : ''}"><b style="width:${memPct.toFixed(1)}%"></b></div>
               <div class="meter-cap"><span>系统盘 ${esc(sys.systemDrive)} 已用</span><span class="num">剩余 ${bytes(sys.diskFree, true)} / ${bytes(sys.diskTotal, true)}</span></div>
-              <div class="meter"><b style="width:${diskUsedPct.toFixed(1)}%"></b></div>
+              <div class="meter${diskUsedPct > 90 ? ' warn' : ''}"><b style="width:${diskUsedPct.toFixed(1)}%"></b></div>
             </div>` : '<p class="muted">正在读取……</p>'}
           </div>
         </section>
@@ -231,8 +239,8 @@ function renderOverview() {
 function filteredTweaks(cat) {
   const q = S.query.trim().toLowerCase();
   let list = q
-    ? tweaks().filter((t) => [t.title, t.desc, t.effect, t.risk].some((s) => s.toLowerCase().includes(q)))
-    : tweaks().filter((t) => t.category === cat);
+    ? mainTweaks().filter((t) => [t.title, t.desc, t.effect, t.risk].some((s) => s.toLowerCase().includes(q)))
+    : mainTweaks().filter((t) => t.category === cat);
   if (S.filter === 'recommended') list = list.filter((t) => t.recommended);
   if (S.filter === 'pending') list = list.filter((t) => !isApplied(t));
   return list;
@@ -245,7 +253,7 @@ function renderTweaks(arg) {
   const q = S.query.trim();
   const list = filteredTweaks(cat);
   const c = category(cat);
-  const all = tweaks();
+  const all = mainTweaks();
   const recHere = list.filter((t) => t.recommended && !isApplied(t) && !S.staged.has(t.id));
 
   return `
@@ -388,6 +396,92 @@ function renderCleanup() {
     </div>`;
 }
 
+function renderProtection() {
+  const list = protectionTweaks();
+  const on = list.filter(isApplied).length;
+  return `
+    <div class="title-row">
+      <div>
+        <h1>系统防护</h1>
+        <p class="lede">防火墙和 Windows Defender 的开关与规则。这些是系统的安全防线，<b>关闭会直接降低电脑安全性</b>。每一项都用微软官方命令实现、可一键还原，但请务必读完说明再决定。</p>
+      </div>
+    </div>
+
+    <div class="warn-banner" role="alert">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.7"><path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.6" r=".5" fill="currentColor" stroke="none"/></svg>
+      <div>
+        <h3>这里的操作会削弱安全防护</h3>
+        <p>关闭防火墙或杀毒后，电脑更容易中病毒、被网络攻击。建议仅在你清楚风险、并且有替代方案（例如安装了其他杀毒软件）时才使用，用完尽快恢复。WinSlim 不会绕过 Windows 的“篡改防护”，关闭 Defender 需要你在 Windows 安全中心亲自确认。</p>
+      </div>
+    </div>
+
+    <div class="quick-acts">
+      <button class="btn" data-action="open-defender">打开 Windows 安全中心</button>
+      <button class="btn" data-action="open-firewall">打开高级防火墙设置（自定义规则）</button>
+    </div>
+
+    <div class="list">${list.map(itemHtml).join('')}</div>
+    <p class="lede" style="margin-top:14px">当前有 ${on} 项防护处于关闭/修改状态。随时可以在这里或“改动记录”里还原。</p>`;
+}
+
+function renderAbout() {
+  return `
+    <div class="title-row">
+      <div>
+        <h1>关于与声明</h1>
+        <p class="lede">WinSlim 轻装 · 版本 ${esc(S.catalog.version ?? '')} · 当前系统 ${esc(S.catalog.os.label)}（内部版本 ${S.catalog.os.build}）</p>
+      </div>
+    </div>
+
+    <div class="setting">
+      <div><h2>免责声明</h2><p>使用前请务必阅读。</p></div>
+      <div class="panel disclaimer">
+        <p>WinSlim 轻装（以下称“本软件”）是一款用于调整 Windows 系统设置的工具，<b>按“现状”免费提供，不作任何明示或暗示的担保</b>。</p>
+        <p>本软件会修改注册表、系统服务、防火墙与安全设置。虽然每一项都提供了说明、风险提示和一键还原，但系统环境千差万别，<b>任何修改都由你自行决定并承担全部风险</b>。因使用本软件造成的系统故障、数据丢失、安全事件或任何直接、间接损失，作者概不负责。</p>
+        <p>强烈建议：重要操作前先创建系统还原点、备份重要数据；第一次使用先从标着“安全”的项目开始；公司或学校等受管理的设备请遵守相应规定。</p>
+        <p>本软件仅用于管理<b>你自己拥有或已获授权的设备</b>，请勿用于任何未经授权或非法的用途。</p>
+      </div>
+    </div>
+
+    <div class="setting">
+      <div><h2>使用许可</h2><p>源代码可查看，但禁止商业用途。</p></div>
+      <div class="panel">
+        <ul class="tight">
+          <li>允许个人<b>免费</b>使用、学习、修改。</li>
+          <li>允许在<b>注明来源并保留本许可</b>的前提下，非商业地分发原版或修改版。</li>
+          <li><b>禁止任何商业用途</b>：包括但不限于出售、捆绑收费、付费代装、商业分发或集成到收费产品/服务中。如需商用，请先联系作者获得书面授权。</li>
+          <li>本软件按现状提供，不附带任何担保。</li>
+        </ul>
+        <p style="margin:12px 0 0">完整条款见仓库中的 <span class="mono">LICENSE</span> 文件。项目在功能完善后将正式开源。</p>
+      </div>
+    </div>
+
+    <div class="setting">
+      <div><h2>作者与项目</h2><p>欢迎反馈问题和建议。</p></div>
+      <div class="panel">
+        <dl class="idcard">
+          <dt>作者</dt><dd>${esc(AUTHOR.name)}</dd>
+          <dt>邮箱</dt><dd><a data-action="mailto">${esc(AUTHOR.email)}</a></dd>
+          <dt>GitHub</dt><dd><button class="link" data-action="open-url" data-url="${AUTHOR.github}">${esc(AUTHOR.github)}</button></dd>
+          <dt>项目仓库</dt><dd><button class="link" data-action="open-url" data-url="${REPO_URL}">${esc(REPO_URL)}</button></dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="setting">
+      <div><h2>与原版的区别</h2><p>WinSlim 在“Windows11轻松设置 v1.07”基础上重写。</p></div>
+      <div class="panel">
+        <p>保留了去广告、去推广、去臃肿的思路，并新增了磁盘清理、系统防护和完整的备份还原。以下原版做法有意没有照搬：</p>
+        <ul>
+          <li>以 TrustedInstaller 身份、绕过篡改防护去强改 Defender 服务：改为只用微软官方命令，并由你在安全中心亲自确认。</li>
+          <li>从私人服务器用 HTTP 下载软件并以管理员身份运行：已去除，只用微软商店和 winget。</li>
+          <li>强制删除 Edge 和 WebView2：会破坏小组件、商店应用和本程序界面，不予保留。</li>
+          <li>把更新暂停到 2042 年：改为只放宽暂停上限，暂停多久由你自己决定。</li>
+        </ul>
+      </div>
+    </div>`;
+}
+
 function renderHistory() {
   const changed = tweaks().filter((t) => S.status.get(t.id)?.hasBackup);
   return `
@@ -425,20 +519,6 @@ function renderHistory() {
       <div class="panel">
         <p class="mono">C:\\ProgramData\\WinSlim\\winslim.log</p>
         <button class="btn" data-action="open-log">打开日志文件夹</button>
-      </div>
-    </div>
-
-    <div class="setting">
-      <div><h2>关于 WinSlim</h2><p>版本 ${esc(S.catalog.version ?? '')} · 当前系统 ${esc(S.catalog.os.label)}（内部版本 ${S.catalog.os.build}）</p></div>
-      <div class="panel">
-        <p>WinSlim 是在“Windows11轻松设置 v1.07”的基础上重新编写的。下面这些有意没有保留：</p>
-        <ul>
-          <li>关闭 Defender、DEP、UAC，或以 TrustedInstaller 身份改服务：安全代价太大，也不属于“减负”。</li>
-          <li>从私人服务器用 HTTP 下载软件并以管理员身份运行：改为只用微软商店和 winget。</li>
-          <li>强制删除 Edge 和 WebView2：会破坏小组件、商店应用和 WinSlim 自己的界面。</li>
-          <li>把更新暂停到 2042 年：只放宽暂停上限，暂停多久由你自己在“设置”里选。</li>
-        </ul>
-        <p style="margin:12px 0 0"><button class="link" data-action="open-url" data-url="${REPO_URL}">在 GitHub 上查看源代码</button></p>
       </div>
     </div>`;
 }
@@ -543,11 +623,11 @@ async function commitTweaks() {
     failures.push(err.message);
   }
   S.busy = null;
-  if (failures.length) S.notices.push({ text: `${failures.length} 项没有成功。${failures.join('；')}` });
+  if (failures.length) S.notices.push({ kind: 'err', text: `${failures.length} 项没有成功。${failures.join('；')}` });
   if (restart === 'explorer') S.notices.push({ text: '部分改动要重启文件资源管理器才能生效。任务栏会闪一下，已打开的文件夹窗口会关闭。', action: { label: '立即重启资源管理器', run: () => call('restartExplorer') } });
   if (restart === 'logoff') S.notices.push({ text: '部分改动要注销并重新登录后才能生效。' });
   if (restart === 'reboot') S.notices.push({ text: '部分改动要重启电脑后才能生效。' });
-  if (!failures.length && restart === 'none') S.notices.push({ text: '已完成，改动已经生效。' });
+  if (!failures.length && restart === 'none') S.notices.push({ kind: 'ok', text: '已完成，改动已经生效。' });
   render();
 }
 
@@ -675,6 +755,9 @@ document.addEventListener('click', async (e) => {
   else if (a === 'open-restore') call('openSystemRestore');
   else if (a === 'open-log') call('openLogFolder');
   else if (a === 'open-url') call('openUrl', { url: el.dataset.url });
+  else if (a === 'open-defender') call('openDefenderSettings');
+  else if (a === 'open-firewall') call('openFirewallConsole');
+  else if (a === 'mailto') location.href = `mailto:${AUTHOR.email}`;
 });
 
 document.addEventListener('change', (e) => {

@@ -69,6 +69,8 @@ public sealed class TweakAction
     public string? RevertStartType { get; set; }
     public string? Apply { get; set; }
     public string? Revert { get; set; }
+    /// <summary>cmd 动作的执行环境：powershell 或默认 cmd。</summary>
+    public string? Shell { get; set; }
 }
 
 public sealed class DetectRule
@@ -80,6 +82,8 @@ public sealed class DetectRule
     public JsonElement? Value { get; set; }
     public string? Run { get; set; }
     public string? Contains { get; set; }
+    /// <summary>cmd 检测的执行环境：powershell 或默认 cmd。</summary>
+    public string? Shell { get; set; }
 }
 
 public sealed class AppCatalog

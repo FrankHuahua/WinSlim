@@ -110,7 +110,9 @@ public sealed class TweakEngine
         }
         if (rule.Type == "cmd" && rule.Run != null)
         {
-            var r = await Shell.Cmd(rule.Run, TimeSpan.FromSeconds(60));
+            var r = rule.Shell == "powershell"
+                ? await Shell.PowerShell(rule.Run, TimeSpan.FromSeconds(90))
+                : await Shell.Cmd(rule.Run, TimeSpan.FromSeconds(60));
             return r.Output.Contains(rule.Contains ?? "", StringComparison.OrdinalIgnoreCase);
         }
         return false;
@@ -136,7 +138,9 @@ public sealed class TweakEngine
                             await Services.SetStartType(a.Name!, a.StartType!);
                         break;
                     case "cmd":
-                        var r = await Shell.Cmd(a.Apply!, TimeSpan.FromMinutes(3));
+                        var r = a.Shell == "powershell"
+                            ? await Shell.PowerShell(a.Apply!, TimeSpan.FromMinutes(3))
+                            : await Shell.Cmd(a.Apply!, TimeSpan.FromMinutes(3));
                         if (!r.Ok) throw new InvalidOperationException(FirstLine(r.Output));
                         break;
                 }
@@ -171,7 +175,9 @@ public sealed class TweakEngine
                     case "cmd":
                         if (a.Revert != null)
                         {
-                            var r = await Shell.Cmd(a.Revert, TimeSpan.FromMinutes(3));
+                            var r = a.Shell == "powershell"
+                                ? await Shell.PowerShell(a.Revert, TimeSpan.FromMinutes(3))
+                                : await Shell.Cmd(a.Revert, TimeSpan.FromMinutes(3));
                             if (!r.Ok) throw new InvalidOperationException(FirstLine(r.Output));
                         }
                         break;

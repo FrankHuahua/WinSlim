@@ -1,21 +1,65 @@
-MIT License
+WinSlim 轻装 —— 非商业使用许可
+WinSlim License (Non-Commercial)
+版本 1.0 / Version 1.0
 
-Copyright (c) 2026 WinSlim contributors
+版权所有 (c) 2026 FrankHuahua
+Copyright (c) 2026 FrankHuahua
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+==================== 中文条款 ====================
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+一、授权范围
+在遵守本许可的前提下，任何人可以免费获得本软件及其源代码，并：
+  1. 为个人、学习、研究目的使用、运行本软件；
+  2. 修改源代码，制作衍生版本；
+  3. 以非商业方式分发本软件的原版或修改版，但必须保留本许可全文、
+     版权声明和作者信息，并注明来源仓库地址。
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+二、商业用途限制
+未经作者事先书面授权，禁止将本软件或其任何部分用于商业用途，
+包括但不限于：出售、出租、付费捆绑、付费代装、作为收费服务或
+收费产品的一部分进行分发或集成、通过本软件直接或间接获利。
+如需商业授权，请联系作者：wxl995232151@gmail.com
+
+三、免责声明
+本软件按“现状”提供，不附带任何明示或暗示的担保，包括但不限于
+适销性、特定用途适用性和非侵权的担保。本软件会修改系统注册表、
+服务、防火墙及安全设置，所有修改均由使用者自行决定并承担全部风险。
+在任何情况下，作者均不对因使用或无法使用本软件而导致的任何直接、
+间接、偶然或后果性损害（包括系统损坏、数据丢失、安全事件等）承担责任。
+
+四、其他
+本软件仅供用于使用者自己拥有或已获授权的设备，不得用于任何未经
+授权或违法的目的。本项目在功能完善后计划以开源许可正式发布，
+届时将以新的许可声明为准。
+
+==================== English Terms ====================
+
+1. Grant
+Subject to this license, any person may obtain this software and its
+source code free of charge and may: (a) use and run it for personal,
+educational, or research purposes; (b) modify the source and create
+derivative works; (c) distribute the original or modified software for
+NON-COMMERCIAL purposes only, provided that this entire license, the
+copyright notice, and author information are retained and the source
+repository is credited.
+
+2. Non-Commercial Restriction
+Without the author's prior written permission, you may NOT use this
+software or any part of it for commercial purposes, including but not
+limited to selling, renting, paid bundling, paid installation services,
+distribution or integration as part of a paid product or service, or
+otherwise profiting directly or indirectly from it. For a commercial
+license, contact: wxl995232151@gmail.com
+
+3. Disclaimer
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED. It modifies system registry, services, firewall, and security
+settings; all changes are made at the user's sole risk. IN NO EVENT SHALL
+THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY (INCLUDING
+SYSTEM DAMAGE, DATA LOSS, OR SECURITY INCIDENTS) ARISING FROM THE USE OF
+THIS SOFTWARE.
+
+4. Misc
+Use this software only on devices you own or are authorized to manage.
+The project is planned to be released under an open-source license once
+feature-complete, at which point the new license notice will govern.

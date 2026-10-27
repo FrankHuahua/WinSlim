@@ -51,6 +51,10 @@ static class SelfTest
             report["os"] = os;
             using var s = Resources.Open("catalog/tweaks.json")!;
             var catalog = System.Text.Json.JsonSerializer.Deserialize<TweakCatalog>(s, Json.Options)!;
+            using var ps = Resources.Open("catalog/protection.json")!;
+            var protection = System.Text.Json.JsonSerializer.Deserialize<TweakCatalog>(ps, Json.Options)!;
+            catalog.Categories.AddRange(protection.Categories);
+            catalog.Tweaks.AddRange(protection.Tweaks);
             var engine = new TweakEngine(catalog);
             var ids = new HashSet<string>();
             foreach (var t in catalog.Tweaks)

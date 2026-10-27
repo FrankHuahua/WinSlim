@@ -65,9 +65,11 @@ public static class Shell
         return new ShellResult(p.ExitCode, sb.ToString().Trim());
     }
 
+    static readonly string[] AllowedSchemes = { "https://", "ms-settings:", "ms-windows-store:", "windowsdefender:" };
+
     public static void OpenUrl(string url)
     {
-        if (!url.StartsWith("https://") && !url.StartsWith("ms-settings:") && !url.StartsWith("ms-windows-store:"))
+        if (!AllowedSchemes.Any(url.StartsWith))
             return;
         Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     }

@@ -19,12 +19,18 @@
   };
   let catalog, appsCatalog, cleaners;
 
-  const ready = Promise.all(['tweaks', 'apps', 'maintenance'].map((n) => fetch(`catalog/${n}.json`).then((r) => r.json())))
-    .then(([t, a, m]) => { catalog = t; appsCatalog = a; cleaners = m.cleaners; });
+  const ready = Promise.all(['tweaks', 'protection', 'apps', 'maintenance'].map((n) => fetch(`catalog/${n}.json`).then((r) => r.json())))
+    .then(([t, p, a, m]) => {
+      catalog = t;
+      catalog.categories.push(...p.categories);
+      catalog.tweaks.push(...p.tweaks);
+      appsCatalog = a; cleaners = m.cleaners;
+    });
 
   const startType = { auto: '自动', 'delayed-auto': '自动（延迟启动）', manual: '手动', disabled: '禁用' };
   const describe = (x) => x.type === 'reg' ? `${x.path} › ${x.name ? x.name : '(默认)'} = ${typeof x.value === 'string' ? `"${x.value}"` : x.value}`
-    : x.type === 'service' ? `服务 ${x.name} 启动类型 → ${startType[x.startType]}` : `运行 ${x.apply}`;
+    : x.type === 'service' ? `服务 ${x.name} 启动类型 → ${startType[x.startType]}`
+    : `${x.shell === 'powershell' ? 'PowerShell' : '命令'}：${x.apply}`;
   const applies = (t) => t.os === 'all' || (t.os === '11') === os.isWindows11;
   const status = (t) => ({ id: t.id, state: fixedApplied.has(t.id) ? 'applied' : 'default', hasBackup: backedUp.has(t.id) });
   const appList = () => appsCatalog.apps.map((a) => ({ package: a.package, version: '1.0', installed: installed.has(a.package), provisioned: installed.has(a.package) }));
@@ -34,7 +40,7 @@
   const methods = {
     async catalog() {
       return {
-        os, version: '1.0.0', categories: catalog.categories,
+        os, version: '1.1.0', categories: catalog.categories,
         tweaks: catalog.tweaks.filter(applies).map((t) => ({ ...t, changes: t.actions.map(describe), actions: undefined, detect: undefined })),
         appGroups: appsCatalog.groups, apps: appsCatalog.apps, cleaners,
       };
@@ -76,6 +82,7 @@
     },
     async restorePoint() { await wait(900); return { ok: true, message: '已创建还原点' }; },
     async restartExplorer() {}, async openUrl() {}, async openLogFolder() {}, async openSystemRestore() {},
+    async openDefenderSettings() {}, async openFirewallConsole() {},
   };
 
   window.__winslimHost = {
