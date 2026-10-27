@@ -78,9 +78,12 @@ public static class Shell
 /// <summary>写到 %ProgramData%\WinSlim\winslim.log 的操作日志。</summary>
 public static class Log
 {
-    public static readonly string Dir = System.IO.Path.Combine(
+    public static string Dir { get; private set; } = System.IO.Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "WinSlim");
-    static readonly string FilePath = System.IO.Path.Combine(Dir, "winslim.log");
+    static string FilePath => System.IO.Path.Combine(Dir, "winslim.log");
+
+    /// <summary>只供自检使用：把日志和备份指到临时目录，不碰真实数据。</summary>
+    internal static void UseDirectory(string dir) => Dir = dir;
     static readonly object Gate = new();
 
     public static void Write(string line)

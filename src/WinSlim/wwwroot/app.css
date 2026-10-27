@@ -32,8 +32,8 @@
 
   --accent: #0f6d82;
   --accent-soft: rgba(15, 109, 130, 0.14);
-  /* 高对比高亮：进度/状态/强调。比正文背景亮度差足够大。 */
-  --hi: #00b3cc;
+  /* 高对比高亮：进度/状态/强调。浅色下取 #0095ac，对白底 3.4:1，满足图形与大字号要求。 */
+  --hi: #0095ac;
   --hi-2: #00d492;
   --hi-glow: rgba(0, 179, 204, 0.45);
 
@@ -213,9 +213,9 @@ input[type="checkbox"] { width: 16px; height: 16px; margin: 0; accent-color: var
 }
 .search input::placeholder { color: var(--faint); }
 .search input:focus { border-color: var(--hi); box-shadow: 0 0 0 3px var(--hi-glow); }
-.search svg { position: absolute; left: 12px; top: 11px; stroke: var(--faint); }
+.search svg { position: absolute; left: 12px; top: 11px; stroke: var(--faint); z-index: 1; pointer-events: none; }
 .search kbd {
-  position: absolute; right: 8px; top: 8px;
+  position: absolute; right: 8px; top: 8px; z-index: 1;
   font: 12px/18px var(--font); color: var(--faint);
   padding: 0 6px; border-radius: var(--radius-chip); background: var(--raised); border: 1px solid var(--border);
 }
@@ -287,6 +287,10 @@ h3 { margin: 0; font-size: 14px; line-height: 20px; font-weight: 650; }
   overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
+/* 标签放不下时，右侧渐隐提示还有更多，可用滚轮横向滚动 */
+.tabs.more-right { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 56px), transparent); }
+.tabs.more-left { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 56px), transparent); }
+.tabs.more-left.more-right { -webkit-mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent); mask-image: linear-gradient(to right, transparent, #000 56px, #000 calc(100% - 56px), transparent); }
 .tabs button {
   position: relative; height: 42px; padding: 0; border: 0; background: none; cursor: pointer;
   color: var(--muted); white-space: nowrap; transition: color .14s;
@@ -543,6 +547,7 @@ dialog::backdrop { background: rgba(10, 14, 20, .45); backdrop-filter: blur(3px)
 @keyframes pulse { 50% { opacity: .5; } }
 
 @media (max-width: 1180px) {
+  .tabs { gap: 16px; }
   .grid-overview { grid-template-columns: 1fr; }
   .grid-overview .stack { grid-template-columns: 1fr 1fr; }
   .explain { grid-template-columns: 1fr; gap: 12px; }

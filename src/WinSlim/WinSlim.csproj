@@ -12,10 +12,11 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Product>WinSlim 轻装</Product>
     <Description>给原生 Windows 10/11 减负的优化工具</Description>
-    <Copyright>MIT License</Copyright>
+    <Copyright>Copyright (c) 2026 FrankHuahua · 非商业使用许可，禁止商用</Copyright>
+    <Company>FrankHuahua</Company>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SatelliteResourceLanguages>zh-Hans</SatelliteResourceLanguages>
     <InvariantGlobalization>false</InvariantGlobalization>

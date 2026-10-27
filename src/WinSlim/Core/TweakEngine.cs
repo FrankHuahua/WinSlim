@@ -18,7 +18,7 @@ public sealed class BackupEntry
 
 public sealed class BackupStore
 {
-    static readonly string FilePath = System.IO.Path.Combine(Log.Dir, "backup.json");
+    static string FilePath => System.IO.Path.Combine(Log.Dir, "backup.json");
     readonly Dictionary<string, List<BackupEntry>> _entries;
     readonly object _gate = new();
 
@@ -120,9 +120,12 @@ public sealed class TweakEngine
 
     public async Task<TweakOutcome> Apply(Tweak tweak)
     {
+        var newBackup = !_backup.Has(tweak.Id);
+        var cmdOnly = tweak.Actions.All(a => a.Type == "cmd");
+        var done = 0;
         try
         {
-            if (!_backup.Has(tweak.Id))
+            if (newBackup)
                 _backup.Put(tweak.Id, Snapshot(tweak));
 
             foreach (var a in tweak.Actions)
@@ -135,7 +138,10 @@ public sealed class TweakEngine
                         break;
                     case "service":
                         if (Services.Exists(a.Name!))
-                            await Services.SetStartType(a.Name!, a.StartType!);
+                        {
+                            var sr = await Services.SetStartType(a.Name!, a.StartType!);
+                            if (!sr.Ok) throw new InvalidOperationException($"修改服务 {a.Name} 失败：{FirstLine(sr.Output)}");
+                        }
                         break;
                     case "cmd":
                         var r = a.Shell == "powershell"
@@ -144,12 +150,24 @@ public sealed class TweakEngine
                         if (!r.Ok) throw new InvalidOperationException(FirstLine(r.Output));
                         break;
                 }
+                done++;
             }
+
+            // 有些命令（例如被篡改防护拦截的 Set-MpPreference）不报错但不生效，用检测规则复核一次。
+            if (tweak.Detect != null && !await Check(tweak.Detect))
+            {
+                if (newBackup && cmdOnly) _backup.Remove(tweak.Id);
+                Log.Write($"应用 {tweak.Id} 后复核未生效");
+                return new TweakOutcome(tweak.Id, false, tweak.FailHint ?? "命令已经执行，但检测到设置没有生效。可能被系统保护或组策略拦截。");
+            }
+
             Log.Write($"应用 {tweak.Id}");
             return new TweakOutcome(tweak.Id, true, null);
         }
         catch (Exception ex)
         {
+            // 一处都还没改就失败：撤掉刚写的备份，免得“改动记录”里出现没改过的项。
+            if (newBackup && (done == 0 || cmdOnly)) _backup.Remove(tweak.Id);
             Log.Write($"应用 {tweak.Id} 失败：{ex.Message}");
             return new TweakOutcome(tweak.Id, false, Friendly(ex));
         }
@@ -170,7 +188,10 @@ public sealed class TweakEngine
                     case "service":
                         var start = saved?.FirstOrDefault(b => b.Type == "service" && b.Name == a.Name)?.StartType ?? a.RevertStartType;
                         if (start != null && Services.Exists(a.Name!))
-                            await Services.SetStartType(a.Name!, start);
+                        {
+                            var sr = await Services.SetStartType(a.Name!, start);
+                            if (!sr.Ok) throw new InvalidOperationException($"还原服务 {a.Name} 失败：{FirstLine(sr.Output)}");
+                        }
                         break;
                     case "cmd":
                         if (a.Revert != null)

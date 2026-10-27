@@ -45,6 +45,8 @@ public sealed class Tweak
     public bool Recommended { get; set; }
     public List<TweakAction> Actions { get; set; } = new();
     public DetectRule? Detect { get; set; }
+    /// <summary>命令执行了但检测到没有生效时，给用户的提示（例如被篡改防护拦截）。</summary>
+    public string? FailHint { get; set; }
 
     public bool AppliesTo(OsInfo os) => Os switch
     {

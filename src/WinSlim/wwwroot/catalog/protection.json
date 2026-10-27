@@ -21,7 +21,8 @@
       "actions": [
         { "type": "cmd", "shell": "powershell", "apply": "Set-NetFirewallProfile -All -Enabled False", "revert": "Set-NetFirewallProfile -All -Enabled True" }
       ],
-      "detect": { "type": "cmd", "shell": "powershell", "run": "try{[string]((Get-NetFirewallProfile -ErrorAction Stop).Enabled -contains $true)}catch{'True'}", "contains": "False" }
+      "detect": { "type": "cmd", "shell": "powershell", "run": "try{[string]((Get-NetFirewallProfile -ErrorAction Stop).Enabled -contains $true)}catch{'True'}", "contains": "False" },
+      "failHint": "防火墙没有被关闭，可能是组策略或其他安全软件锁定了防火墙设置。"
     },
     {
       "id": "firewall-block-search",
@@ -53,7 +54,8 @@
       "actions": [
         { "type": "cmd", "shell": "powershell", "apply": "try{Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction Stop}catch{Write-Error '命令被“篡改防护”拦截。请先在 Windows 安全中心关闭“篡改防护”后再试。'}", "revert": "Set-MpPreference -DisableRealtimeMonitoring $false -ErrorAction SilentlyContinue" }
       ],
-      "detect": { "type": "cmd", "shell": "powershell", "run": "try{[string](Get-MpComputerStatus -ErrorAction Stop).RealTimeProtectionEnabled}catch{'True'}", "contains": "False" }
+      "detect": { "type": "cmd", "shell": "powershell", "run": "try{[string](Get-MpComputerStatus -ErrorAction Stop).RealTimeProtectionEnabled}catch{'True'}", "contains": "False" },
+      "failHint": "实时保护没有被关闭，通常是 Windows 的“篡改防护”拦截了。请点上方“打开 Windows 安全中心”，在“病毒和威胁防护设置”里先关闭“篡改防护”，再回来应用。WinSlim 不会替你绕过它。"
     }
   ]
 }

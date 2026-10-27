@@ -40,7 +40,7 @@
   const methods = {
     async catalog() {
       return {
-        os, version: '1.1.0', categories: catalog.categories,
+        os, version: '1.1.1', categories: catalog.categories,
         tweaks: catalog.tweaks.filter(applies).map((t) => ({ ...t, changes: t.actions.map(describe), actions: undefined, detect: undefined })),
         appGroups: appsCatalog.groups, apps: appsCatalog.apps, cleaners,
       };

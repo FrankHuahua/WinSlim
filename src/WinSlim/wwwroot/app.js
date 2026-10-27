@@ -110,8 +110,44 @@ function render() {
   }[r.name]?.() ?? renderOverview();
   view.innerHTML = noticesHtml() + html;
   view.scrollTop = top;
+  setupTabs();
   renderTray();
 }
+
+/** 提示条：最多保留 3 条；成功类 8 秒后自动消失，失败和需要操作的一直保留到手动关闭。 */
+function notify(n) {
+  S.notices.push(n);
+  while (S.notices.length > 3) S.notices.shift();
+  if (n.kind === 'ok') {
+    setTimeout(() => {
+      const i = S.notices.indexOf(n);
+      if (i >= 0) { S.notices.splice(i, 1); render(); }
+    }, 8000);
+  }
+}
+
+/** 分类标签放不下时显示渐隐提示，并支持滚轮横向滚动。 */
+function setupTabs() {
+  const tabs = view.querySelector('.tabs');
+  if (!tabs) return;
+  const update = () => {
+    tabs.classList.toggle('more-left', tabs.scrollLeft > 2);
+    tabs.classList.toggle('more-right', tabs.scrollLeft + tabs.clientWidth < tabs.scrollWidth - 2);
+  };
+  tabs.addEventListener('scroll', update, { passive: true });
+  tabs.addEventListener('wheel', (e) => {
+    if (tabs.scrollWidth <= tabs.clientWidth || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+    tabs.scrollLeft += e.deltaY;
+    e.preventDefault();
+  }, { passive: false });
+  const sel = tabs.querySelector('[aria-selected="true"]');
+  if (sel) {
+    const left = sel.getBoundingClientRect().left - tabs.getBoundingClientRect().left + tabs.scrollLeft;
+    tabs.scrollLeft = Math.max(0, left - (tabs.clientWidth - sel.offsetWidth) / 2);
+  }
+  update();
+}
+window.addEventListener('resize', () => view.querySelector('.tabs')?.dispatchEvent(new Event('scroll')));
 
 function noticesHtml() {
   return S.notices.map((n, i) => `
@@ -616,18 +652,18 @@ async function commitTweaks() {
         if (o.ok) S.staged.delete(o.id);
         else failures.push(`${tweaks().find((t) => t.id === o.id)?.title}：${o.error}`);
       });
-      if (res.restoreNote) S.notices.push({ text: res.restoreNote });
+      if (res.restoreNote) notify({ text: res.restoreNote });
       if (RESTART_ORDER.indexOf(res.restart) > RESTART_ORDER.indexOf(restart)) restart = res.restart;
     }
   } catch (err) {
     failures.push(err.message);
   }
   S.busy = null;
-  if (failures.length) S.notices.push({ kind: 'err', text: `${failures.length} 项没有成功。${failures.join('；')}` });
-  if (restart === 'explorer') S.notices.push({ text: '部分改动要重启文件资源管理器才能生效。任务栏会闪一下，已打开的文件夹窗口会关闭。', action: { label: '立即重启资源管理器', run: () => call('restartExplorer') } });
-  if (restart === 'logoff') S.notices.push({ text: '部分改动要注销并重新登录后才能生效。' });
-  if (restart === 'reboot') S.notices.push({ text: '部分改动要重启电脑后才能生效。' });
-  if (!failures.length && restart === 'none') S.notices.push({ kind: 'ok', text: '已完成，改动已经生效。' });
+  if (failures.length) notify({ kind: 'err', text: `${failures.length} 项没有成功。${failures.join('；')}` });
+  if (restart === 'explorer') notify({ text: '部分改动要重启文件资源管理器才能生效。任务栏会闪一下，已打开的文件夹窗口会关闭。', action: { label: '立即重启资源管理器', run: () => call('restartExplorer') } });
+  if (restart === 'logoff') notify({ text: '部分改动要注销并重新登录后才能生效。' });
+  if (restart === 'reboot') notify({ text: '部分改动要重启电脑后才能生效。' });
+  if (!failures.length && restart === 'none') notify({ kind: 'ok', text: '已完成，改动已经生效。' });
   render();
 }
 
@@ -652,11 +688,11 @@ async function removeApps() {
     S.apps = res.apps;
     const failed = res.outcomes.filter((o) => !o.ok);
     S.appSel.clear();
-    S.notices.push({ text: failed.length
+    notify({ kind: failed.length ? 'err' : 'ok', text: failed.length
       ? `卸载了 ${res.outcomes.length - failed.length} 个；${failed.length} 个没有成功：${failed.map((o) => `${S.catalog.apps.find((a) => a.package === o.package)?.name}（${o.error}）`).join('；')}`
       : `已卸载 ${res.outcomes.length} 个应用。` });
   } catch (err) {
-    S.notices.push({ text: err.message });
+    notify({ kind: 'err', text: err.message });
   }
   S.busy = null;
   render();
@@ -679,10 +715,10 @@ async function runCleanup() {
     const freed = res.outcomes.reduce((s, o) => s + (o.freed || 0), 0);
     S.scan = Object.fromEntries(res.scan.map((x) => [x.id, x]));
     const failed = res.outcomes.filter((o) => !o.ok);
-    S.notices.push({ text: `已释放 ${bytes(freed, true)}。${failed.length ? `${failed.length} 项没有完成：${failed.map((o) => o.error).join('；')}` : ''}` });
+    notify({ kind: failed.length ? 'err' : 'ok', text: `已释放 ${bytes(freed, true)}。${failed.length ? `${failed.length} 项没有完成：${failed.map((o) => o.error).join('；')}` : ''}` });
     S.system = await call('system');
   } catch (err) {
-    S.notices.push({ text: err.message });
+    notify({ kind: 'err', text: err.message });
   }
   S.busy = null;
   render();
@@ -738,8 +774,8 @@ document.addEventListener('click', async (e) => {
     try {
       const res = await call('reinstallApp', { package: app.package });
       S.apps = res.apps;
-      S.notices.push({ text: res.outcome.ok ? `已重新安装 ${app.name}。` : res.outcome.error });
-    } catch (err) { S.notices.push({ text: err.message }); }
+      notify({ kind: res.outcome.ok ? 'ok' : 'err', text: res.outcome.ok ? `已重新安装 ${app.name}。` : res.outcome.error });
+    } catch (err) { notify({ kind: 'err', text: err.message }); }
     S.busy = null;
     render();
   }
@@ -748,7 +784,7 @@ document.addEventListener('click', async (e) => {
   else if (a === 'restore-point') {
     S.busy = { text: '正在创建系统还原点……' };
     render();
-    try { const r = await call('restorePoint'); S.notices.push({ text: r.message }); } catch (err) { S.notices.push({ text: err.message }); }
+    try { const r = await call('restorePoint'); notify({ kind: r.ok ? 'ok' : 'err', text: r.message }); } catch (err) { notify({ kind: 'err', text: err.message }); }
     S.busy = null;
     render();
   }
